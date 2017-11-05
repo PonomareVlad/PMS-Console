@@ -1,6 +1,6 @@
 var webpack = require('webpack');
 const path = require('path');
-const ASSET_PATH = process.env.ASSET_PATH || '/assets/build/';
+const ASSET_PATH = process.env.ASSET_PATH || '/pms-console/assets/build/';
 module.exports = {
     context: path.resolve(__dirname, 'assets/js/'),
     devtool: "source-map",
