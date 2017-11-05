@@ -1,6 +1,6 @@
 {
-  "name": "Панель управления сайтами PMS",
-  "short_name": "PMS Console",
+  "name": "Управление вашим сайтом",
+  "short_name": "Ваш сайт",
   "scope": "/cms/console/",
   "start_url": "index.html",
   "lang": "ru-RU",
