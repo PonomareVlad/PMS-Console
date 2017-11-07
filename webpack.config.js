@@ -11,7 +11,7 @@ module.exports = {
     },
     output: {
         filename: '[name].bundle.js',
-        publicPath: '/',
+        publicPath: '/pms-console/',
         path: path.resolve(__dirname, './docs')
     },
     module: {
