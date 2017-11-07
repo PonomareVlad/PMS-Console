@@ -1,0 +1,2 @@
+webpackJsonp([0],{14:function(t,e,n){function r(t){return n(s(t))}function s(t){var e=o[t];if(!(e+1))throw new Error("Cannot find module '"+t+"'.");return e}var o={"./auth.js":15,"./init.js":0,"./modules/siteStructure.js":16,"./workspace.js":17};r.keys=function(){return Object.keys(o)},r.resolve=s,t.exports=r,r.id=14},15:function(t,e,n){"use strict"},16:function(t,e,n){"use strict"},17:function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0}),console.log("workspace");e.test="test2"}});
+//# sourceMappingURL=0.bundle.js.map

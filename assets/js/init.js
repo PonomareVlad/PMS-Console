@@ -1,5 +1,5 @@
 //var workspace = require('./workspace.js');
-//require('../css/style.css');
+require('../css/style.css');
 
 function loadWorkspace() {
     // import * as workspace from './workspace.js';
@@ -16,7 +16,7 @@ function getModule(module, callback, path) {
 }
 
 window.addEventListener('load', function () {
-    document.body.innerHTML = '<h1>PMS Console!</h1>';
+    document.body.innerHTML = '<h1>Управление сайтом</h1>';
     loadWorkspace();
     console.log(`Init with workspace ${window.workspace ? workspace.test : false}`);
 });
