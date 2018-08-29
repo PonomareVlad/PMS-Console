@@ -1,16 +1,16 @@
 var webpack = require('webpack');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+// const CleanWebpackPlugin = require('clean-webpack-plugin');
 // const ASSET_PATH = process.env.ASSET_PATH || '/pms-console/assets/build/';
 module.exports = {
     // context: path.resolve(__dirname, 'assets/js/'),
     devtool: "source-map",
     entry: {
-        init: './assets/js/init.js' //'./assets/js/init.js'
+        init: './assets/js/init.js', //'./assets/js/init.js'
     },
     output: {
-        filename: '[name].bundle.js',
+        filename: '[name].js',
         publicPath: '/pms-console/',
         path: path.resolve(__dirname, './docs')
     },
@@ -18,7 +18,7 @@ module.exports = {
         rules: [
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
+                exclude: '/node_modules/',
                 use: {
                     loader: 'babel-loader',
                     options: {
@@ -27,7 +27,7 @@ module.exports = {
                     }
                 }
             },
-            {
+            /*{
                 test: /\.css$/,
                 use: [
                     'style-loader',
@@ -45,7 +45,7 @@ module.exports = {
                 use: [
                     'file-loader'
                 ]
-            }
+            }*/
         ]
     },
     plugins: [
@@ -60,6 +60,6 @@ module.exports = {
         /*new webpack.DefinePlugin({
             'process.env.ASSET_PATH': JSON.stringify(ASSET_PATH)
         }),*/
-        new CleanWebpackPlugin(['docs'])
+        //new CleanWebpackPlugin(['docs'])
     ]
 };
