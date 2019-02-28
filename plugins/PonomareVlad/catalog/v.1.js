@@ -65,6 +65,12 @@
                     case 'items_catalog_plugin':
                         resolve(showItemsListPage());
                         break;
+                    case 'categories_catalog_plugin':
+                        resolve(showCategoriesListPage());
+                        break;
+                    case 'collections_catalog_plugin':
+                        resolve(showCollectionsListPage());
+                        break;
                     case 'add_catalog_plugin':
                         resolve(showItemParametersPage());
                         break;
@@ -109,7 +115,7 @@
                 type: 'item',
                 description: 'Список всех коллекций и создание новых',
                 parameters: parameters,
-            }, {
+            } /*{
                 id: 'sections_catalog_plugin',
                 title: 'Разделы',
                 type: 'item',
@@ -121,7 +127,7 @@
                 type: 'item',
                 description: 'Управление параметрами каталога',
                 parameters: parameters,
-            }];
+            }*/];
             // else return resolve({status: true, menuItems: []});
             // }
             // });
@@ -144,6 +150,19 @@
         window.saveItemParameters = saveItemParameters;
         window.menuButtonClick = menuButtonClick;
         window.searchItemsListPage = searchItemsListPage;
+        window.showCategoriesListPage = showCategoriesListPage;
+        window.viewCategoryPage = viewCategoryPage;
+        window.listCategoryClick = listCategoryClick;
+        window.saveCategoryParameters = saveCategoryParameters;
+        window.newCategory = newCategory;
+        window.saveCategory = saveCategory;
+        window.deleteCategory = deleteCategory;
+
+        window.showCollectionsListPage = showCollectionsListPage;
+        window.newCollection = newCollection;
+        window.saveCollection = saveCollection;
+        window.deleteCollection = deleteCollection;
+
 
         function showAddCatalogItem_old(itemId) {
             if (!pms.selectedHost.catalogParameters) {
@@ -504,6 +523,12 @@
             return window.open(getHostUrl() + itemData.href, 'blank');
         }
 
+        function viewCategoryPage(id) {
+            let itemData = id ? pms.selectedHost.catalog.categories[1][id] : pms.selectedHost.catalog.selectedItem;
+            if (!itemData || !itemData.href) return false;
+            return window.open(getHostUrl() + itemData.href, 'blank');
+        }
+
         function loadItems(parameters, limit, offset, search) {
             limit = limit ? limit : 20;
             offset = offset ? offset : false;
@@ -529,30 +554,9 @@
             });
         }
 
-        function loadCategories(parameters, limit, offset, search) {
-            limit = limit ? limit : 20;
-            offset = offset ? offset : false;
-            let data = {};
-            if (limit) data.limit = limit;
-            if (offset) data.offset = offset;
-            if (parameters) data.parameters = parameters;
-            if (search) data._search = search;
-            return pluginIo('console/getCategories', data).then(function (response) {
-                // console.debug(response);
-                if (!response.status) return false;
-                if (parameters || search) return response.data;
-                if (!pms.selectedHost.catalog) pms.selectedHost.catalog = {};
-                if (!pms.selectedHost.catalog.category) pms.selectedHost.catalog.category = {};
-                if (!pms.selectedHost.catalog.categories) pms.selectedHost.catalog.categories = [];
-                // pms.selectedHost.catalog.items.splice(offset, limit, Object.values(response.data));
-                Array.prototype.splice.apply(pms.selectedHost.catalog.categories, [offset, limit].concat(Object.values(response.data)));
-                for (let i in pms.selectedHost.catalog.categories) {  // TODO: replace this by for (offset; offset + limit; ++)
-                    let category = pms.selectedHost.catalog.categories[i];
-                    pms.selectedHost.catalog.category[category.id] = category;
-                }
-                return true;
-            });
-        }
+
+
+
 
         function loadItemsCount(parameters, search) {
             let data = {};
@@ -590,6 +594,28 @@
             });
         }
 
+        function loadCategoryParameters() {
+            return pluginIo('console/getCategoryParameters', false, {includeVariants: true}).then(function (response) {
+                // console.debug(response);
+                if (!response.status) return false;
+                if (!pms.selectedHost.catalog) pms.selectedHost.catalog = {};
+                if (!pms.selectedHost.catalog.itemParameter) pms.selectedHost.catalog.itemParameter = {};
+                pms.selectedHost.catalog.itemParameters = response.data;
+                for (let i in pms.selectedHost.catalog.itemParameters) {
+                    let parameter = pms.selectedHost.catalog.itemParameters[i];
+                    if (parameter.variants) {
+                        parameter.variant = {};
+                        for (let i in parameter.variants) {
+                            let variant = parameter.variants[i];
+                            parameter.variant[variant.data] = variant;
+                        }
+                    }
+                    pms.selectedHost.catalog.itemParameter[parameter.parameter] = parameter;
+                }
+                return true;
+            });
+        }
+
         function loadItemData(id) {
             if (!id) return false;
             return pluginIo('console/getItem', {id: id}).then(function (response) {
@@ -600,6 +626,19 @@
                 let item = response.data[id];
                 pms.selectedHost.catalog.item[item.id] = item;
                 return item.id;
+            });
+        }
+
+        function loadCategoryData(id) {
+            if (!id) return false;
+            return pluginIo('console/getCategory', {id: id}).then(function (response) {
+                // console.debug(response);
+                if (!response.status) return false;
+                if (!pms.selectedHost.catalog) pms.selectedHost.catalog = {};
+                if (!pms.selectedHost.catalog.item) pms.selectedHost.catalog.item = {};
+                let category = response.data[id];
+                pms.selectedHost.catalog.category[category.id] = category;
+                return category.id;
             });
         }
 
@@ -637,6 +676,97 @@
         }
 
         function showItemParameters(id) {
+            let targetNode = document.getElementById('parametersList');
+            if (!pms.selectedHost.catalog || !pms.selectedHost.catalog.itemParameters || !targetNode) return false;
+            // let item = pms.selectedHost.catalog.item[id];
+            // let item = pms.selectedHost.catalog.selectedItem = {};
+            if (id && pms.selectedHost.catalog.item && pms.selectedHost.catalog.item[id]) pms.selectedHost.catalog.selectedItem = Object.assign({}, pms.selectedHost.catalog.item[id]);
+            else pms.selectedHost.catalog.selectedItem = {};
+            pms.onLeavePage.push(function () {
+                pms.selectedHost.catalog.selectedItem = false;
+                delete pms.selectedHost.catalog.selectedItem;
+                return true;
+            });
+            // console.debug('showItemParameters', pms.selectedHost.catalog.item[id], pms.selectedHost.catalog.selectedItem);
+            let item = pms.selectedHost.catalog.selectedItem;
+            let source = '';
+            source += '<div class="material-box item"><h1>Название</h1><h2>Отображается в списках товаров, а так же в Title и H1 на странице товара</h2><div class="input-section"><input type="text" placeholder="Название" value="' + (item.title ? item.title : '') + '" data-parameter="title" onchange="fetchParameterChanges(\'title\');"></div></div>';
+            source += '<div class="material-box item"><h1>Описание</h1><h2>Отображается на странице товара</h2><div class="input-section"><textarea placeholder="Описание" data-parameter="description" onchange="fetchParameterChanges(\'description\');">' + (item.description ? item.description : '') + '</textarea></div></div>';
+            // source += '<div class="material-box item"><h1>Путь</h1><h2>Часть адреса страницы, выводиться сразу за адресом категории</h2><div class="input-section"><input type="text" placeholder="Путь" value="' + (item.path ? item.path : '') + '"></div></div>';
+            for (let i in pms.selectedHost.catalog.itemParameters) {
+                let parameter = pms.selectedHost.catalog.itemParameters[i];
+                if (item[parameter.parameter]) parameter.data = item[parameter.parameter];
+                let title = parameter.title ? parameter.title : parameter.parameter;
+                let description = parameter.description ? parameter.description : false;
+                let parameterSource = genItemParameter(parameter, item);
+                if (!parameterSource || parameterSource === '') continue;
+                source += '<div class="material-box item"><h1>' + title + '</h1>' + (description ? '<h2>' + description + '</h2>' : '');
+                source += '<div data-parameter-section="' + parameter.parameter + '">' + parameterSource + '</div>';
+                /*switch (parameter.type) {
+                    case 'int':
+                        source += '<div class="input-section">';
+                        if (parameter.parameter === 'category') {
+                            source += '<select><option value="' + parameter.data + '">' + parameter.data + '</option></select>';
+                        } else if (parameter.parameter === 'collection') {
+                            source += '<select><option value="' + parameter.data + '">' + parameter.data + '</option></select>';
+                        } else {
+                            source += '<input type="number" placeholder="' + title + '" value="' + parameter.data + '">';
+                        }
+                        source += '</div>';
+                        break;
+                    case 'array':
+                        if (parameter.parameter === 'images') {
+                            source += '<div class="images-section">';
+                            if (parameter.data && parameter.data.length > 0) {
+                                for (let i in parameter.data) {
+                                    source += '<figure><img src="' + getHostUrl(true) + parameter.data[i] + '"><button class="remove-image">❌</button></figure>';
+                                }
+                            } else {
+                                source += 'Нет изображений';
+                            }
+                            source += '</div><div class="input-section"><input type="file" placeholder="Добавить изображение"></div>';
+                        } else {
+                            source += '<ul class="list-section">';
+                            if (parameter.data && parameter.data.length > 0) {
+                                for (let i in parameter.data) {
+                                    source += '<li>' + parameter.data + ' <button>❌</button></li>';
+                                }
+                            } else {
+                                source += 'Нет элементов';
+                            }
+                            source += '</ul><div class="input-section"><input type="text" placeholder="Добавить элемент"></div>';
+                        }
+                        break;
+                    case 'select':
+                        if (parseInt(parameter.count) === 1) {
+                            source += '<div class="input-section">';
+                            source += '<select><option selected value="' + parameter.data + '">' + (parameter.data ? parameter.data : 'Не указано') + '</option></select>';
+                            source += '</div>';
+                        } else {
+                            source += '<ul class="list-section">';
+                            if (parameter.data && parameter.data.length > 0) {
+                                for (let i in parameter.data) {
+                                    if (parameter.parameter === 'modifies') source += '<li>' + parameter.data[i].title + ' <button>❌</button></li>';
+                                    else source += '<li>' + parameter.data[i] + ' <button>❌</button></li>';
+                                }
+                            } else {
+                                source += 'Нет элементов';
+                            }
+                            source += '</ul><div class="input-section"><select><option selected disabled>Добавить элемент</option></select></div>';
+                        }
+                        break;
+                    default:
+                        source += '<div class="input-section"><input type="text" placeholder="' + title + '" value="' + parameter.data + '"></div>';
+                        break;
+                }*/
+                source += '</div>';
+                // source += '<li><div>' + item.id + '</div><div>' + item.title + '</div><div class="hide-on-mobile">' + item.description + '</div><div class="flex-right">' + controlSection + '</div></li>';
+            }
+            targetNode.innerHTML = source;
+            return true;
+        }
+
+        function showCategoryParameters(id) {
             let targetNode = document.getElementById('parametersList');
             if (!pms.selectedHost.catalog || !pms.selectedHost.catalog.itemParameters || !targetNode) return false;
             // let item = pms.selectedHost.catalog.item[id];
@@ -918,32 +1048,517 @@
                 });
         }
 
-        function showCategoriesListPage(parameters) {
+        function showCollectionsListPage(id = 0) {
+            if (!pms.selectedHost.catalog) pms.selectedHost.catalog = {};
+            pms.selectedHost.catalog.selectedCollection = {};
+            pms.selectedHost.catalog.collections = [];
             let listSectionId = 'itemsList';
-            return loadCategories(parameters, 120)
+            return loadCollection(id)
                 .then(function (result) {
                     if (!result) return result;
-                    return prepareTemplate('list');
+                    return prepareTemplate('categories');
                 })
                 .then(function (result) {
                     if (!result) return result;
-                    // let listSection = document.getElementById(listSectionId);
+                    //let listSection = document.getElementById(listSectionId);
                     let controlsMenuSource = '<div class="flex-left">';
                     controlsMenuSource += '</div><div class="flex-right">';
-                    controlsMenuSource += '<div class="menu-button-section"><button data-menu-button="addItemButton" onclick="menuButtonClick(\'addItemButton\',\'showItemParametersPage\');">Добавить товар</button></div>';
+                    controlsMenuSource += '<div class="menu-button-section"><button data-menu-button="addCollectionButton" onclick="newCollection();">Добавить коллекцию</button></div>';
                     controlsMenuSource += '</div>';
                     document.getElementById('controls-menu').innerHTML = controlsMenuSource;
-                    return showItemsList(listSectionId);
+                    return showCollectionsList(listSectionId, 120, 0);
                 })
                 .then(function (result) {
                     if (!result) return result;
-                    return loadItemsCount(parameters);
+                    return true;//loadItemsCount(parameters);
                 })
                 .then(function (result) {
-                    if (!result) createNotification('Каталог', 'Не удалось загрузить количество категорий', pms.config.icon);
-                    infinityScroll(loadItems, showItemsList, 'workspaceSection', listSectionId, 20, 120, pms.selectedHost.catalog.itemsCount, 4, parameters);
+                    //if (!result) createNotification('Каталог', 'Не удалось загрузить количество категорий', pms.config.icon);
+                    //infinityScroll(loadItems, showItemsList, 'workspaceSection', listSectionId, 20, 120, pms.selectedHost.catalog.itemsCount, 4, parameters);
                     return true;
                 });
+        }
+
+
+
+        function showCategoriesListPage(id = 0) {
+            if (!pms.selectedHost.catalog) pms.selectedHost.catalog = {};
+            pms.selectedHost.catalog.selectedCategory = {};
+            pms.selectedHost.catalog.childCategories = [];
+            let categorySectionId = 'itemShow';
+            let listSectionId = 'itemsList';
+            return loadCategory(id)
+                .then(function (result) {
+                    if (!result) return result;
+                    return prepareTemplate('categories');
+                })
+                .then(function (result) {
+                    if (!result) return result;
+                    //let listSection = document.getElementById(listSectionId);
+                    let controlsMenuSource = '<div class="flex-left">';
+                    controlsMenuSource += '</div><div class="flex-right">';
+                    controlsMenuSource += '<div class="menu-button-section"><button data-menu-button="addCategoryButton" onclick="newCategory();">Добавить категорию</button></div>';
+                    controlsMenuSource += '</div>';
+                    document.getElementById('controls-menu').innerHTML = controlsMenuSource;
+                    return showCategoriesList(listSectionId, 120, 0);
+                })
+                .then(function (result) {
+                    if (!result) return result;
+                    return true;//loadItemsCount(parameters);
+                })
+                .then(function (result) {
+                    //if (!result) createNotification('Каталог', 'Не удалось загрузить количество категорий', pms.config.icon);
+                    //infinityScroll(loadItems, showItemsList, 'workspaceSection', listSectionId, 20, 120, pms.selectedHost.catalog.itemsCount, 4, parameters);
+                    return true;
+                });
+        }
+
+        function loadCollection(id) {
+            let data = {};
+            if (id) data.id = id;
+
+            return pluginIo('console/getCollection', data).then(function (response) {
+                console.debug(response);
+                if (!response.status) return false;
+                if(response.data.collection) {
+                    pms.selectedHost.catalog.selectedCollection = response.data.collection;
+                    if(response.data.collection.description == null)
+                        pms.selectedHost.catalog.selectedCollection.description = "";
+                }
+                if(response.data.collections)
+                    pms.selectedHost.catalog.collections = response.data.collections;
+
+
+
+                return true;
+            });
+        }
+
+        function saveCollection() {
+            let data = {};
+
+            pms.selectedHost.catalog.selectedCollection.title = document.getElementById('collection-title').value;
+            pms.selectedHost.catalog.selectedCollection.description = document.getElementById('collection-description').value;
+            pms.selectedHost.catalog.selectedCollection.path = document.getElementById('collection-path').value;
+            if(pms.selectedHost.catalog.selectedCollection.title == ""){
+                alert("Поле Название обязательно для заполнения");
+                return false;
+            }
+            return pluginIo('console/saveCollection', false, {parameters: pms.selectedHost.catalog.selectedCollection}).then(function (response) {
+                if (!response) return false;//createNotification('Каталог', 'Произошла ошибка при сохранении', pms.config.icon);
+                if(!response.status || !response.unique){
+                    createNotification('Каталог', 'Запись не уникальна, выберите другое название', pms.config.icon);
+                    return false;
+                }
+                if(response.id && response.id !== true)
+                    pms.selectedHost.catalog.selectedCollection.id = response.id;
+                createNotification('Каталог', 'Коллекция сохранена', pms.config.icon);
+                return true;
+            }).then(function (result) {
+                if (!result) return result;
+                return showCollectionsListPage()
+            });
+        }
+
+        function deleteCollection() {
+            let data = {};
+            return pluginIo('console/deleteCollection', false, {parameters: pms.selectedHost.catalog.selectedCollection}).then(function (response) {
+                if (!response || !response.status) return false;//createNotification('Каталог', 'Произошла ошибка при сохранении', pms.config.icon);
+                createNotification('Каталог', 'Коллекция удалена', pms.config.icon);
+                return true;
+            }).then(function (result) {
+                if (!result) return result;
+                return showCollectionsListPage()
+            });
+        }
+
+
+        function newCollection()
+        {
+            let categoryTargetNode = document.getElementById('itemShow');
+
+
+
+            let html = `
+                <div id="controls-menu-itemShow" class="horizontal-flex-menu">
+                    <div class="flex-left">
+                        <div class="menu-button-section">
+                            <button onclick="showCollectionsListPage();">Назад</button>
+                        </div>
+                    </div>
+                    <div class="flex-right">
+                        <div class="menu-button-section">
+                            <button onclick="saveCollection()">Сохранить</button>
+                        </div>
+                        <!--<div class="menu-button-section">-->
+                            <!--<button>Посмотреть</button>-->
+                        <!--</div>-->
+                        <!--<div class="menu-button-section">-->
+                            <!--<button>Удалить</button>-->
+                        <!--</div>-->
+                    </div>
+                </div>
+                <div class="masonry" >
+                     <div class="material-box item">
+                        <h1>Название</h1>
+                        <div class="input-section">
+                            <input id="collection-title" type="text" placeholder="Название" value="">
+                        </div>
+                    </div>
+                    <div class="material-box item">
+                        <h1>Путь (латинскими буквами)</h1>
+                        <div class="input-section">
+                            <input id="collection-path" type="text" placeholder="Путь" value="">
+                        </div>
+                    </div>
+                    <div class="material-box item">
+                        <h1>Описание</h1>
+                        <div class="input-section">
+                            <textarea id="collection-description" placeholder="Описание"></textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            categoryTargetNode.innerHTML = html;
+            categoryTargetNode.style.display = 'block';
+        }
+
+        function showCollectionsList(targetNode, limit, offset, collectionList) {
+
+            let categoryTargetNode = document.getElementById('itemShow');
+            //if((!pms.selectedHost.catalog || !pms.selectedHost.catalog.selectedCategory) || !categoryTargetNode) return false;
+            if(pms.selectedHost.catalog.selectedCollection.length != 0) {
+                let removeButton =
+                    `<div class="menu-button-section">
+                            <button onclick="deleteCollection()">Удалить</button>
+                        </div>`;
+
+
+                let collection = pms.selectedHost.catalog.selectedCollection;
+                let html = `
+                <div id="controls-menu-itemShow" class="horizontal-flex-menu">
+                    <div class="flex-left">
+                        <div class="menu-button-section">
+                            <button onclick="showCollectionsListPage();">Назад</button>
+                        </div>
+                    </div>
+                    <div class="flex-right">
+                        <div class="menu-button-section">
+                            <button onclick="saveCollection()">Сохранить</button>
+                        </div>
+                        ${removeButton}                        
+                    </div>
+                </div>
+                <div class="masonry" >
+                     <div class="material-box item">
+                        <h1>Название</h1>
+                        <div class="input-section">
+                            <input id="collection-title" type="text" placeholder="Название" value="${collection.title}">
+                        </div>
+                    </div>
+                     <div class="material-box item">
+                        <h1>Путь (латинскими буквами)</h1>
+                        <div class="input-section">
+                            <input id="collection-path" type="text" placeholder="Путь" value="${collection.path}">
+                        </div>
+                    </div>
+                    <div class="material-box item">
+                        <h1>Описание</h1>
+                        <div class="input-section">
+                            <textarea id="collection-description" placeholder="Описание">${collection.description}</textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+                categoryTargetNode.innerHTML = html;
+                categoryTargetNode.style.display = 'block';
+            } else categoryTargetNode.style.display = 'none';
+
+
+            let itemsCount = 0;
+            targetNode = targetNode && targetNode.innerHTML ? targetNode : (targetNode ? document.getElementById(targetNode) : document.getElementById('itemsList'));
+            if(pms.selectedHost.catalog.collections.length != 0) {
+                // console.debug('showItemsList init with: ', arguments);
+                if (((!collectionList || typeof collectionList !== "object") && (!pms.selectedHost.catalog || !pms.selectedHost.catalog.collections)) || !targetNode) return false;
+                // console.debug('showItemsList preparing passed');
+                let source = '';
+                collectionList = (collectionList && typeof collectionList === "object") ? (collectionList instanceof Array ? collectionList : Object.values(collectionList)) : pms.selectedHost.catalog.collections;
+                limit = limit ? limit : collectionList.length;
+                offset = offset ? offset : 0;
+                // console.debug('showItemsList parameters: ', limit, offset, itemsList);
+                // console.debug('showItemsList called!', limit, offset);
+                // console.debug('showItemsList real items count', pms.selectedHost.catalog.items.length, pms.selectedHost.catalog.items);
+
+                // for (let i in pms.selectedHost.catalog.items) {
+                for (let i = offset; i < offset + limit; i++) {
+                    if (!collectionList[i]) continue;
+                    itemsCount++;
+                    let item = collectionList[i];
+                    let controlSection = '';
+                    //if (item['href']) controlSection += '<button onclick="viewCategoryPage(' + item.id + ');event.stopPropagation();" title="Открыть на сайте">👁</button>';
+                    // controlSection += '<button onclick="showItemParametersPage(' + item.id + ')" title="Редактировать">✏️</button>';
+                    // controlSection += '<button title="Удалить" onclick="listCategoryClick(' + item.id + ',\'deleteCategory\');event.stopPropagation();">❌</button>';
+
+
+                    source += '<li onclick="showCollectionsListPage(' + item.id + ');" data-list-item="' + item.id + '"><div>' + item.id + '</div><div>' + item.title + '</div><div class="flex-right">' + controlSection + '</div></li>';
+                }
+                // console.debug('showItemsList fetched items:', itemsCount, source);
+
+                targetNode.innerHTML = source;
+                targetNode.style.display = 'block';
+            } else {
+                targetNode.style.display = 'none';
+            }
+            return itemsCount;
+        }
+
+
+
+        function loadCategory(id) {
+            let data = {};
+            if (id) data.id = id;
+
+            return pluginIo('console/getCategory', data).then(function (response) {
+                console.debug(response);
+                if (!response.status) return false;
+                if(response.data.category) {
+                    pms.selectedHost.catalog.selectedCategory = response.data.category;
+                    if(response.data.category.description == null)
+                        pms.selectedHost.catalog.selectedCategory.description = "";
+                }
+                if(response.data.categories)
+                    pms.selectedHost.catalog.childCategories = response.data.categories;
+                pms.selectedHost.catalog.canRemoveCategory = false;
+
+                if(response.data.categories.length == 0)
+                    pms.selectedHost.catalog.canRemoveCategory = true;
+                else
+                    pms.selectedHost.catalog.canRemoveCategory = false;
+
+                return true;
+            });
+        }
+
+        function saveCategory() {
+            let data = {};
+            if(pms.selectedHost.catalog.selectedCategory.parent_category == 0){
+                pms.selectedHost.catalog.selectedCategory.parent_category = null;
+            }
+            pms.selectedHost.catalog.selectedCategory.title = document.getElementById('category-title').value;
+            pms.selectedHost.catalog.selectedCategory.description = document.getElementById('category-description').value;
+            pms.selectedHost.catalog.selectedCategory.path = document.getElementById('category-path').value;
+            if(pms.selectedHost.catalog.selectedCategory.title == ""){
+                alert("Поле Название обязательно для заполнения");
+                return false;
+            }
+            return pluginIo('console/saveCategory', false, {parameters: pms.selectedHost.catalog.selectedCategory}).then(function (response) {
+                if (!response) return false;//createNotification('Каталог', 'Произошла ошибка при сохранении', pms.config.icon);
+                if(!response.status || !response.unique){
+                    createNotification('Каталог', 'Запись не уникальна, выберите другое название', pms.config.icon);
+                    return false;
+                }
+                if(response.id && response.id !== true)
+                    pms.selectedHost.catalog.selectedCategory.id = response.id;
+                createNotification('Каталог', 'Категория сохранена', pms.config.icon);
+                return true;
+            }).then(function (result) {
+                if (!result) return result;
+                return showCategoriesListPage(pms.selectedHost.catalog.selectedCategory.id)
+            });
+        }
+
+        function deleteCategory() {
+            let data = {};
+            if(pms.selectedHost.catalog.selectedCategory.parent_category == 0){
+                pms.selectedHost.catalog.selectedCategory.parent_category = null;
+            }
+            return pluginIo('console/deleteCategory', false, {parameters: pms.selectedHost.catalog.selectedCategory}).then(function (response) {
+                if (!response || !response.status) return false;//createNotification('Каталог', 'Произошла ошибка при сохранении', pms.config.icon);
+                createNotification('Каталог', 'Категория удалена', pms.config.icon);
+                return true;
+            }).then(function (result) {
+                if (!result) return result;
+                return showCategoriesListPage(pms.selectedHost.catalog.selectedCategory.parent_category)
+            });
+        }
+
+
+        function newCategory()
+        {
+            let categoryTargetNode = document.getElementById('itemShow');
+            let parent_category = null;
+            pms.selectedHost.catalog.canRemoveCategory = false;
+
+            if(pms.selectedHost.catalog.selectedCategory.length != 0){
+                parent_category = pms.selectedHost.catalog.selectedCategory.parent_category;
+                pms.selectedHost.catalog.selectedCategory.parent_category = pms.selectedHost.catalog.selectedCategory.id;
+            }
+            pms.selectedHost.catalog.selectedCategory.id = null;
+
+            let html = `
+                <div id="controls-menu-itemShow" class="horizontal-flex-menu">
+                    <div class="flex-left">
+                        <div class="menu-button-section">
+                            <button onclick="showCategoriesListPage(${parent_category});">Назад</button>
+                        </div>
+                    </div>
+                    <div class="flex-right">
+                        <div class="menu-button-section">
+                            <button onclick="saveCategory()">Сохранить</button>
+                        </div>
+                        <!--<div class="menu-button-section">-->
+                            <!--<button>Посмотреть</button>-->
+                        <!--</div>-->
+                        <!--<div class="menu-button-section">-->
+                            <!--<button>Удалить</button>-->
+                        <!--</div>-->
+                    </div>
+                </div>
+                <div class="masonry" >
+                     <div class="material-box item">
+                        <h1>Название</h1>
+                        <div class="input-section">
+                            <input id="category-title" type="text" placeholder="Название" value="">
+                        </div>
+                    </div>
+                    <div class="material-box item">
+                        <h1>Путь (латинскими буквами)</h1>
+                        <div class="input-section">
+                            <input id="category-path" type="text" placeholder="Путь" value="">
+                        </div>
+                    </div>
+                    <div class="material-box item">
+                        <h1>Описание</h1>
+                        <div class="input-section">
+                            <textarea id="category-description" placeholder="Описание"></textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            categoryTargetNode.innerHTML = html;
+            categoryTargetNode.style.display = 'block';
+        }
+
+        function showCategoriesList(targetNode, limit, offset, categoriesList) {
+
+            let categoryTargetNode = document.getElementById('itemShow');
+            //if((!pms.selectedHost.catalog || !pms.selectedHost.catalog.selectedCategory) || !categoryTargetNode) return false;
+            if(pms.selectedHost.catalog.selectedCategory.length != 0) {
+                let removeButton = (pms.selectedHost.catalog.canRemoveCategory == true) ?
+                    `<div class="menu-button-section">
+                            <button onclick="deleteCategory()">Удалить</button>
+                        </div>`
+                    : "";
+
+                let category = pms.selectedHost.catalog.selectedCategory;
+                let html = `
+                <div id="controls-menu-itemShow" class="horizontal-flex-menu">
+                    <div class="flex-left">
+                        <div class="menu-button-section">
+                            <button onclick="showCategoriesListPage(${category.parent_category});">Назад</button>
+                        </div>
+                    </div>
+                    <div class="flex-right">
+                        <div class="menu-button-section">
+                            <button onclick="saveCategory()">Сохранить</button>
+                        </div>
+                        ${removeButton}                        
+                    </div>
+                </div>
+                <div class="masonry" >
+                     <div class="material-box item">
+                        <h1>Название</h1>
+                        <div class="input-section">
+                            <input id="category-title" type="text" placeholder="Название" value="${category.title}">
+                        </div>
+                    </div>
+                     <div class="material-box item">
+                        <h1>Путь (латинскими буквами)</h1>
+                        <div class="input-section">
+                            <input id="category-path" type="text" placeholder="Путь" value="${category.path}">
+                        </div>
+                    </div>
+                    <div class="material-box item">
+                        <h1>Описание</h1>
+                        <div class="input-section">
+                            <textarea id="category-description" placeholder="Описание">${category.description}</textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+                categoryTargetNode.innerHTML = html;
+                categoryTargetNode.style.display = 'block';
+            } else categoryTargetNode.style.display = 'none';
+
+
+            let itemsCount = 0;
+            targetNode = targetNode && targetNode.innerHTML ? targetNode : (targetNode ? document.getElementById(targetNode) : document.getElementById('itemsList'));
+            if(pms.selectedHost.catalog.childCategories.length != 0) {
+                // console.debug('showItemsList init with: ', arguments);
+                if (((!categoriesList || typeof categoriesList !== "object") && (!pms.selectedHost.catalog || !pms.selectedHost.catalog.childCategories)) || !targetNode) return false;
+                // console.debug('showItemsList preparing passed');
+                let source = '';
+                categoriesList = (categoriesList && typeof categoriesList === "object") ? (categoriesList instanceof Array ? categoriesList : Object.values(categoriesList)) : pms.selectedHost.catalog.childCategories;
+                limit = limit ? limit : categoriesList.length;
+                offset = offset ? offset : 0;
+                // console.debug('showItemsList parameters: ', limit, offset, itemsList);
+                // console.debug('showItemsList called!', limit, offset);
+                // console.debug('showItemsList real items count', pms.selectedHost.catalog.items.length, pms.selectedHost.catalog.items);
+
+                // for (let i in pms.selectedHost.catalog.items) {
+                for (let i = offset; i < offset + limit; i++) {
+                    if (!categoriesList[i]) continue;
+                    itemsCount++;
+                    let item = categoriesList[i];
+                    let controlSection = '';
+                    //if (item['href']) controlSection += '<button onclick="viewCategoryPage(' + item.id + ');event.stopPropagation();" title="Открыть на сайте">👁</button>';
+                    // controlSection += '<button onclick="showItemParametersPage(' + item.id + ')" title="Редактировать">✏️</button>';
+                   // controlSection += '<button title="Удалить" onclick="listCategoryClick(' + item.id + ',\'deleteCategory\');event.stopPropagation();">❌</button>';
+
+
+                    source += '<li onclick="showCategoriesListPage(' + item.id + ');" data-list-item="' + item.id + '"><div>' + item.id + '</div><div>' + item.title + '</div><div class="flex-right">' + controlSection + '</div></li>';
+                }
+                // console.debug('showItemsList fetched items:', itemsCount, source);
+
+                targetNode.innerHTML = source;
+                targetNode.style.display = 'block';
+            } else {
+                targetNode.style.display = 'none';
+            }
+            return itemsCount;
+        }
+
+        function listCategoryClick(id, method) {
+            if (isProgress('openListItem')) return false;
+            setProgress('openListItem');
+            switch (method) {
+                case 'showCategoryParametersPage':
+                    method = showCategoryParametersPage;
+                    break;
+                case 'showCategoriesListPage':
+                    method = showCategoriesListPage;
+                    break;
+                case 'deleteCategory':
+                    method = deleteCategory;
+                    break;
+                default:
+                    setProgress('openListItem', false);
+                    return false;
+                    break;
+            }
+            showLoadingIndicator();
+            showItemLoadIndicator(id, 'list-item');
+            return method(id).then(function () {
+                hideLoadingIndicator();
+                hideItemLoadIndicator(id, 'list-item');
+                setProgress('openListItem', false);
+                // console.debug('debug2', pms.selectedHost.catalog.selectedItem);
+                return true;
+            }).catch(errorHandler);
         }
 
         function showItemParametersPage(id) {
@@ -996,6 +1611,59 @@
                     return true;
                 });
         }
+
+        function showCategoryParametersPage(id) {
+            return loadCategoryParameters()
+                .then(function (result) {
+                    if (!result || !id) return result;
+                    return loadCategoryData(id);
+                })
+                .then(function (result) {
+                    if (!result) return result;
+                    return prepareTemplate('category');
+                })
+                .then(function (result) {
+                    if (!result) return result;
+                    let controlsMenuSource = '<div class="flex-left">';
+                    controlsMenuSource += '<div class="menu-button-section"><button data-menu-button="backButton" onclick="menuButtonClick(\'backButton\',\'showCategoriesListPage\');">Назад</button></div>';
+                    controlsMenuSource += '</div><div class="flex-right">';
+                    controlsMenuSource += '<div class="menu-button-section"><button data-menu-button="saveButton" onclick="menuButtonClick(\'saveButton\',\'saveCategoryParameters\');">Сохранить</button></div>';
+                    controlsMenuSource += '<div class="menu-button-section"><button data-menu-button="viewButton" onclick="viewCategoryPage();">Посмотреть</button></div>';
+                    controlsMenuSource += '<div class="menu-button-section"><button data-menu-button="deleteButton" onclick="menuButtonClick(\'deleteButton\',\'deleteCategory\');">Удалить</button></div>';
+                    controlsMenuSource += '</div>';
+                    document.getElementById('controls-menu').innerHTML = controlsMenuSource;
+                    return showCategoryParameters(id);
+                })
+                .then(function (result) {
+                    if (!result) return result;
+                    return workspace.require('macy');
+                })
+                .then(function (result) {
+                    if (!result) return result;
+                    pms.selectedHost.catalog.macy = Macy({
+                        container: '.masonry',
+                        trueOrder: false,
+                        waitForImages: false,
+                        mobileFirst: true,
+                        margin: {
+                            x: 60,
+                            y: 20
+                        },
+                        columns: 1,
+                        breakAt: {
+                            2200: 6,
+                            1900: 5,
+                            1600: 4,
+                            1200: 3,
+                            640: 2
+                        }
+                    });
+                    // console.debug('debug1', pms.selectedHost.catalog.selectedItem);
+                    return true;
+                });
+        }
+
+
 
         function showAddCatalogItem() {
             return loadItemParameters()
@@ -1053,6 +1721,21 @@
                     break;
                 case 'deleteItem':
                     method = deleteItem;
+                    break;
+                case 'showCategoriesListPage':
+                    method = showCategoriesListPage;
+                    break;
+                case 'saveCategoryParameters':
+                    method = saveCategoryParameters;
+                    break;
+                case 'showCategoryParametersPage':
+                    method = showCategoryParametersPage;
+                    break;
+                case 'deleteCategory':
+                    method = deleteCategory;
+                    break;
+                case 'viewCategoryPage':
+                    method = viewCategoryPage;
                     break;
                 default:
                     setProgress('menuButton', false);
@@ -1122,6 +1805,7 @@
             // let data = document.querySelector('[data-parameter="' + parameterId + '"]').value;
             if (typeof index !== "number" || !pms.selectedHost.catalog.selectedItem[parameterId]) return false;
             console.debug('removeParameterVariant', pms.selectedHost.catalog.selectedItem[parameterId].splice(index, 1));
+            console.debug('test', pms.selectedHost.catalog.selectedItem);
             let parameterSection = document.querySelector('[data-parameter-section="' + parameterId + '"]');
             if (!parameterSection) return false;
             // let parameter = Object.assign({}, pms.selectedHost.catalog.itemParameter[parameterId]);
@@ -1132,6 +1816,7 @@
         }
 
         function saveItemParameters() {
+            console.debug('saving Item', pms.selectedHost.catalog.selectedItem);
             return pluginIo('console/saveItem', false, {parameters: pms.selectedHost.catalog.selectedItem}).then(function (response) {
                 if (!response || !response.status || !response.itemId) return false;//createNotification('Каталог', 'Произошла ошибка при сохранении', pms.config.icon);
                 pms.selectedHost.catalog.selectedItem.id = response.itemId;
@@ -1140,6 +1825,17 @@
                 if (!result) return result;
                 return showItemParametersPage(pms.selectedHost.catalog.selectedItem.id)
             });
+        }
+
+        function saveCategoryParameters() {
+           /* return pluginIo('console/saveCategory', false, {parameters: pms.selectedHost.catalog.selectedCategory}).then(function (response) {
+                if (!response || !response.status || !response.categoryId) return false;//createNotification('Каталог', 'Произошла ошибка при сохранении', pms.config.icon);
+                pms.selectedHost.catalog.selectedCategory.id = response.categoryId;
+                return true;
+            }).then(function (result) {
+                if (!result) return result;
+                return showCategoryParametersPage(pms.selectedHost.catalog.selectedCategory.id)
+            });*/
         }
 
         function deleteItem(id) {
@@ -1154,6 +1850,8 @@
                 return showItemsListPage();
             });
         }
+
+
 
         function searchItemsListPage(parameters, search) {
             if (pms.selectedHost.catalog.searchTimeout) clearTimeout(pms.selectedHost.catalog.searchTimeout);

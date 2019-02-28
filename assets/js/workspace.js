@@ -15,6 +15,7 @@ window.createNotification = createNotification;
 window.showNotification = showNotification;
 window.errorHandler = errorHandler;
 window.initPromise = initPromise;
+window.importModule = importModule;
 
 window.onerror = function (message, url, lineNumber) {
     return errorHandler(arguments, message);
@@ -670,5 +671,17 @@ function errorReport(error) {
 export function initPromise(result) {
     return new Promise(function (resolve, reject) {
         return resolve(result);
+    });
+}
+
+export function importModule(moduleId) {
+    return initPromise(moduleId).then(function (moduleId) {
+        let module = pms.module[moduleId];
+        if (!module || !module.loaded) return getModuleData(moduleId).then(loadModule).catch(function (error) {
+            return false;
+        }).then(function (response) {
+            return true;
+        });
+        return true;
     });
 }

@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Custom Video</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+
+    <!-- jQuery, -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+    <!-- Fotorama -->
+
+    <link rel="stylesheet" type="text/css" href="slick/slick.css"/>
+    <!--<link href="style.css" rel="stylesheet">-->
+
+    <script type="text/javascript" src="slick/slick.js"></script>
+
+
+</head>
+
+<body>
+
+<div>TESTOSETJOSETIOT sptiojoitjgod sioijsodjg s TESTOSETJOSETIOT sptiojoitjgod sioijsodjg s TESTOSETJOSETIOT sptiojoitjgod sioijsodjg s
+    TESTOSETJOSETIOT sptiojoitjgod sioijsodjg s
+    TESTOSETJOSETIOT sptiojoitjgod sioijsodjg s
+    TESTOSETJOSETIOT sptiojoitjgod sioijsodjg s
+    TESTOSETJOSETIOT sptiojoitjgod sioijsodjg sTESTOSETJOSETIOT sptiojoitjgod sioijsodjg sTESTOSETJOSETIOT sptiojoitjgod sioijsodjg s
+    TESTOSETJOSETIOT sptiojoitjgod sioijsodjg s
+    TESTOSETJOSETIOT sptiojoitjgod sioijsodjg sTESTOSETJOSETIOT sptiojoitjgod sioijsodjg s
+    v
+    TESTOSETJOSETIOT sptiojoitjgod sioijsodjg sTESTOSETJOSETIOT sptiojoitjgod sioijsodjg s
+    TESTOSETJOSETIOT sptiojoitjgod sioijsodjg sTESTOSETJOSETIOT sptiojoitjgod sioijsodjg s
+    vTESTOSETJOSETIOT sptiojoitjgod sioijsodjg sTESTOSETJOSETIOT sptiojoitjgod sioijsodjg svTESTOSETJOSETIOT sptiojoitjgod sioijsodjg sTESTOSETJOSETIOT sptiojoitjgod sioijsodjg s
+
+
+</div>
+
+<div class="slider-wrapper">
+    <div class="left-text">VIDEO BUSINESS</div>
+    <section class="slider">
+        <div class="item">
+            <div class="embed-container">
+                <a href="#" data-src="//www.youtube.com/watch?v=Ztui3IEvItQ"></a>
+            </div>
+        </div>
+        <div class="item">
+            <div class="embed-container">
+                <a href="#" data-src="//www.youtube.com/watch?v=dfy_Iwdujbk"></a>
+            </div>
+        </div>
+
+
+    </section>
+    <div class="right-text">PRIDEMAX</div>
+    <div class="slider-nav"></div>
+</div>
+
+<script>
+    function getYoutubeId(url) {
+        var regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        var match = url.match(regExp);
+        if (match && match[2].length == 11) {
+            return match[2];
+        } else {
+            //error
+        }
+    }
+    $(document).ready(function() {
+        var slider = $('.slider').on("init", function(event, slick){
+            $('div.embed-container').each(function(){
+                var src = $('a', this).data('src');
+                var id = getYoutubeId(src);
+                $('a', this).html('<img src="//img.youtube.com/vi/'+ id +'/maxresdefault.jpg" /><div class="video-overlay"></div> ');
+                $('.slider-nav').append('<div class="item"><img src="//img.youtube.com/vi/' + id + '/1.jpg"/></div>');
+            });
+        })
+            .on('click', '.slick-slide', function(slick){
+                var src = $('a', this).data('src');
+                var id = getYoutubeId(src);
+                $('a', this).after('<iframe src="//www.youtube.com/embed/'+ id +'?enablejsapi=1&autoplay=1" frameborder="0" allowfullscreen></iframe>');
+                $('a', this).remove();
+                $('.video-overlay', this).remove();
+            })
+            .on('afterChange',function(e,o){
+                //on change slide = do action
+                $('iframe').each(function(){
+                    $(this)[0].contentWindow.postMessage('{"event":"command","func":"' + 'stopVideo' + '","args":""}', '*');
+                });
+            }).slick({
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                arrows: false,
+                fade: true,
+                asNavFor: '.slider-nav'
+            });
+        slider.on('beforeChange', function(event, slick, currentSlide, nextSlide){
+            var current = $('.slider .slick-current');
+            current.html(current.html());
+        });
+
+        $('.slider-nav').slick({
+            slidesToShow: 7,
+            slidesToScroll: 1,
+            asNavFor: '.slider',
+            dots: false,
+            arrows: true,
+            // centerMode: true,
+            focusOnSelect: true
+        });
+    });
+
+</script>
+</body>
+</html>
