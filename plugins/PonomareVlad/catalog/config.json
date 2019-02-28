@@ -1,0 +1,107 @@
+{
+  "modules": [
+    "category",
+    "collection",
+    "search",
+    "sections"
+  ],
+  "config": {
+    "item": {
+      "parametersOrder": [
+        "title",
+        "price",
+        "images",
+        "modifiers",
+        "available",
+        "category",
+        "collection",
+        "gender",
+        "cloth",
+        "description",
+        "article_ru"
+      ],
+      "parametersGroups": {
+        "seo": [
+          "seoTitle",
+          "seoDescription",
+          "path"
+        ]
+      }
+    }
+  },
+  "menuStructure": {
+    "itemsList": {
+      "title": "Все товары",
+      "description": "bla bla bla",
+      "type": "item",
+      "workspaceStructure": {
+        "menuSection": {
+          "leftSection": [
+            {
+              "id": "backButton",
+              "title": "Назад",
+              "type": "button",
+              "action": "openPage?id=itemsList"
+            },
+            {
+              "id": "breadCrumbs",
+              "type": "div",
+              "widget": "breadCrumbs?mode=itemsList"
+            }
+          ]
+        },
+        "template": "list",
+        "list": {
+          "dataSourceAPI": "console/getItems",
+          "pageItems": 20,
+          "infinityScroll": true,
+          "tableSections": [
+            {
+              "title": "Артикул",
+              "parameter": "article"
+            },
+            {
+              "title": "Название",
+              "parameter": "title"
+            },
+            {
+              "title": "Описание",
+              "parameter": "description"
+            },
+            {
+              "type": "group",
+              "groupStructure": [
+                {
+                  "id": "viewButton",
+                  "title": "👁",
+                  "action": "viewItemPage",
+                  "actionParameters": [
+                    {
+                      "type": "variable",
+                      "source": "item.id"
+                    }
+                  ]
+                },
+                {
+                  "id": "editButton",
+                  "title": "✏️",
+                  "action": "showItemParametersPage",
+                  "actionParameters": [
+                    {
+                      "type": "variable",
+                      "source": "item.id"
+                    }
+                  ]
+                },
+                {
+                  "id": "deleteButton",
+                  "title": "❌"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}
