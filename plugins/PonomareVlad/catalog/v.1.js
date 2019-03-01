@@ -20,7 +20,7 @@
         };
 
         // TODO: Обработчик рабочего пространства, тут мы подготавливаем верстку и первичное наполенение в зависимости от полученных параметров
-        catalog.workspaceGenerator = function (parameters = false) {
+        /*catalog.workspaceGenerator = function (parameters = false) {
             return new Promise(function (resolve, reject) {
                 // createNotification(pms.config.name, '<p>Плагин "Каталог" временно недоступен!</p><br><p>Идет процесс обновления плагина на вашм сайте.</p>', pms.config.icon);
                 // return resolve({status: false});
@@ -44,26 +44,24 @@
                         }
                         return resolve(result);
                     }));
-                }
-                else if (parameters.id === 'add_catalog_plugin') {
+                } else if (parameters.id === 'add_catalog_plugin') {
                     return resolve(loadCatalogParameters().then(function (result) {
                         if (!result) return alert('Не удалось загрузить параметры каталога');
                         return resolve(showAddCatalogItem());
                     }));
-                }
-                else {
+                } else {
                     // if (pms.workspace.wrapper) pms.workspace.wrapper.innerHTML = 'installedPlugins';
                     return resolve(testWorkspace());
                     // return resolve({status: false});
                 }
             }).catch(errorHandler);
-        };
+        };*/
 
         catalog.workspaceGenerator = function (parameters = []) {
             return new Promise(function (resolve, reject) {
                 switch (parameters.id) {
                     case 'items_catalog_plugin':
-                        resolve(showItemsListPage());
+                        resolve(showItemsListPage(null, parameters.disableHistory ? parameters.disableHistory : null));
                         break;
                     case 'categories_catalog_plugin':
                         resolve(showCategoriesListPage());
@@ -73,6 +71,9 @@
                         break;
                     case 'add_catalog_plugin':
                         resolve(showItemParametersPage());
+                        break;
+                    case 'item_catalog_plugin':
+                        resolve(showItemParametersPage(parameters.item, parameters.disableHistory ? parameters.disableHistory : null));
                         break;
                     default:
                         createNotification('Каталог', 'Раздел временно отключен', pms.config.icon);
@@ -133,6 +134,7 @@
             // });
         };
 
+        initHistoryHandler.bind(this)();
 
         window.showUpdateCatalogItem = showUpdateCatalogItem;
         window.saveCatalogItem = saveCatalogItem;
@@ -553,9 +555,6 @@
                 return true;
             });
         }
-
-
-
 
 
         function loadItemsCount(parameters, search) {
@@ -1020,11 +1019,17 @@
             };
         }
 
-        function showItemsListPage(parameters) {
+        function showItemsListPage(parameters, disableHistory) {
             let listSectionId = 'itemsList';
             return loadItems(parameters, 120)
                 .then(function (result) {
                     if (!result) return result;
+                    if (!disableHistory) history.pushState({
+                        type: 'plugin',
+                        author: 'PonomareVlad',
+                        plugin: 'catalog',
+                        action: 'items_catalog_plugin'
+                    }, "Товары");
                     return prepareTemplate('list');
                 })
                 .then(function (result) {
@@ -1080,7 +1085,6 @@
         }
 
 
-
         function showCategoriesListPage(id = 0) {
             if (!pms.selectedHost.catalog) pms.selectedHost.catalog = {};
             pms.selectedHost.catalog.selectedCategory = {};
@@ -1120,14 +1124,13 @@
             return pluginIo('console/getCollection', data).then(function (response) {
                 console.debug(response);
                 if (!response.status) return false;
-                if(response.data.collection) {
+                if (response.data.collection) {
                     pms.selectedHost.catalog.selectedCollection = response.data.collection;
-                    if(response.data.collection.description == null)
+                    if (response.data.collection.description == null)
                         pms.selectedHost.catalog.selectedCollection.description = "";
                 }
-                if(response.data.collections)
+                if (response.data.collections)
                     pms.selectedHost.catalog.collections = response.data.collections;
-
 
 
                 return true;
@@ -1140,17 +1143,17 @@
             pms.selectedHost.catalog.selectedCollection.title = document.getElementById('collection-title').value;
             pms.selectedHost.catalog.selectedCollection.description = document.getElementById('collection-description').value;
             pms.selectedHost.catalog.selectedCollection.path = document.getElementById('collection-path').value;
-            if(pms.selectedHost.catalog.selectedCollection.title == ""){
+            if (pms.selectedHost.catalog.selectedCollection.title == "") {
                 alert("Поле Название обязательно для заполнения");
                 return false;
             }
             return pluginIo('console/saveCollection', false, {parameters: pms.selectedHost.catalog.selectedCollection}).then(function (response) {
                 if (!response) return false;//createNotification('Каталог', 'Произошла ошибка при сохранении', pms.config.icon);
-                if(!response.status || !response.unique){
+                if (!response.status || !response.unique) {
                     createNotification('Каталог', 'Запись не уникальна, выберите другое название', pms.config.icon);
                     return false;
                 }
-                if(response.id && response.id !== true)
+                if (response.id && response.id !== true)
                     pms.selectedHost.catalog.selectedCollection.id = response.id;
                 createNotification('Каталог', 'Коллекция сохранена', pms.config.icon);
                 return true;
@@ -1173,10 +1176,8 @@
         }
 
 
-        function newCollection()
-        {
+        function newCollection() {
             let categoryTargetNode = document.getElementById('itemShow');
-
 
 
             let html = `
@@ -1228,7 +1229,7 @@
 
             let categoryTargetNode = document.getElementById('itemShow');
             //if((!pms.selectedHost.catalog || !pms.selectedHost.catalog.selectedCategory) || !categoryTargetNode) return false;
-            if(pms.selectedHost.catalog.selectedCollection.length != 0) {
+            if (pms.selectedHost.catalog.selectedCollection.length != 0) {
                 let removeButton =
                     `<div class="menu-button-section">
                             <button onclick="deleteCollection()">Удалить</button>
@@ -1279,7 +1280,7 @@
 
             let itemsCount = 0;
             targetNode = targetNode && targetNode.innerHTML ? targetNode : (targetNode ? document.getElementById(targetNode) : document.getElementById('itemsList'));
-            if(pms.selectedHost.catalog.collections.length != 0) {
+            if (pms.selectedHost.catalog.collections.length != 0) {
                 // console.debug('showItemsList init with: ', arguments);
                 if (((!collectionList || typeof collectionList !== "object") && (!pms.selectedHost.catalog || !pms.selectedHost.catalog.collections)) || !targetNode) return false;
                 // console.debug('showItemsList preparing passed');
@@ -1315,7 +1316,6 @@
         }
 
 
-
         function loadCategory(id) {
             let data = {};
             if (id) data.id = id;
@@ -1323,16 +1323,16 @@
             return pluginIo('console/getCategory', data).then(function (response) {
                 console.debug(response);
                 if (!response.status) return false;
-                if(response.data.category) {
+                if (response.data.category) {
                     pms.selectedHost.catalog.selectedCategory = response.data.category;
-                    if(response.data.category.description == null)
+                    if (response.data.category.description == null)
                         pms.selectedHost.catalog.selectedCategory.description = "";
                 }
-                if(response.data.categories)
+                if (response.data.categories)
                     pms.selectedHost.catalog.childCategories = response.data.categories;
                 pms.selectedHost.catalog.canRemoveCategory = false;
 
-                if(response.data.categories.length == 0)
+                if (response.data.categories.length == 0)
                     pms.selectedHost.catalog.canRemoveCategory = true;
                 else
                     pms.selectedHost.catalog.canRemoveCategory = false;
@@ -1343,23 +1343,23 @@
 
         function saveCategory() {
             let data = {};
-            if(pms.selectedHost.catalog.selectedCategory.parent_category == 0){
+            if (pms.selectedHost.catalog.selectedCategory.parent_category == 0) {
                 pms.selectedHost.catalog.selectedCategory.parent_category = null;
             }
             pms.selectedHost.catalog.selectedCategory.title = document.getElementById('category-title').value;
             pms.selectedHost.catalog.selectedCategory.description = document.getElementById('category-description').value;
             pms.selectedHost.catalog.selectedCategory.path = document.getElementById('category-path').value;
-            if(pms.selectedHost.catalog.selectedCategory.title == ""){
+            if (pms.selectedHost.catalog.selectedCategory.title == "") {
                 alert("Поле Название обязательно для заполнения");
                 return false;
             }
             return pluginIo('console/saveCategory', false, {parameters: pms.selectedHost.catalog.selectedCategory}).then(function (response) {
                 if (!response) return false;//createNotification('Каталог', 'Произошла ошибка при сохранении', pms.config.icon);
-                if(!response.status || !response.unique){
+                if (!response.status || !response.unique) {
                     createNotification('Каталог', 'Запись не уникальна, выберите другое название', pms.config.icon);
                     return false;
                 }
-                if(response.id && response.id !== true)
+                if (response.id && response.id !== true)
                     pms.selectedHost.catalog.selectedCategory.id = response.id;
                 createNotification('Каталог', 'Категория сохранена', pms.config.icon);
                 return true;
@@ -1371,7 +1371,7 @@
 
         function deleteCategory() {
             let data = {};
-            if(pms.selectedHost.catalog.selectedCategory.parent_category == 0){
+            if (pms.selectedHost.catalog.selectedCategory.parent_category == 0) {
                 pms.selectedHost.catalog.selectedCategory.parent_category = null;
             }
             return pluginIo('console/deleteCategory', false, {parameters: pms.selectedHost.catalog.selectedCategory}).then(function (response) {
@@ -1385,13 +1385,12 @@
         }
 
 
-        function newCategory()
-        {
+        function newCategory() {
             let categoryTargetNode = document.getElementById('itemShow');
             let parent_category = null;
             pms.selectedHost.catalog.canRemoveCategory = false;
 
-            if(pms.selectedHost.catalog.selectedCategory.length != 0){
+            if (pms.selectedHost.catalog.selectedCategory.length != 0) {
                 parent_category = pms.selectedHost.catalog.selectedCategory.parent_category;
                 pms.selectedHost.catalog.selectedCategory.parent_category = pms.selectedHost.catalog.selectedCategory.id;
             }
@@ -1446,7 +1445,7 @@
 
             let categoryTargetNode = document.getElementById('itemShow');
             //if((!pms.selectedHost.catalog || !pms.selectedHost.catalog.selectedCategory) || !categoryTargetNode) return false;
-            if(pms.selectedHost.catalog.selectedCategory.length != 0) {
+            if (pms.selectedHost.catalog.selectedCategory.length != 0) {
                 let removeButton = (pms.selectedHost.catalog.canRemoveCategory == true) ?
                     `<div class="menu-button-section">
                             <button onclick="deleteCategory()">Удалить</button>
@@ -1497,7 +1496,7 @@
 
             let itemsCount = 0;
             targetNode = targetNode && targetNode.innerHTML ? targetNode : (targetNode ? document.getElementById(targetNode) : document.getElementById('itemsList'));
-            if(pms.selectedHost.catalog.childCategories.length != 0) {
+            if (pms.selectedHost.catalog.childCategories.length != 0) {
                 // console.debug('showItemsList init with: ', arguments);
                 if (((!categoriesList || typeof categoriesList !== "object") && (!pms.selectedHost.catalog || !pms.selectedHost.catalog.childCategories)) || !targetNode) return false;
                 // console.debug('showItemsList preparing passed');
@@ -1517,7 +1516,7 @@
                     let controlSection = '';
                     //if (item['href']) controlSection += '<button onclick="viewCategoryPage(' + item.id + ');event.stopPropagation();" title="Открыть на сайте">👁</button>';
                     // controlSection += '<button onclick="showItemParametersPage(' + item.id + ')" title="Редактировать">✏️</button>';
-                   // controlSection += '<button title="Удалить" onclick="listCategoryClick(' + item.id + ',\'deleteCategory\');event.stopPropagation();">❌</button>';
+                    // controlSection += '<button title="Удалить" onclick="listCategoryClick(' + item.id + ',\'deleteCategory\');event.stopPropagation();">❌</button>';
 
 
                     source += '<li onclick="showCategoriesListPage(' + item.id + ');" data-list-item="' + item.id + '"><div>' + item.id + '</div><div>' + item.title + '</div><div class="flex-right">' + controlSection + '</div></li>';
@@ -1561,7 +1560,7 @@
             }).catch(errorHandler);
         }
 
-        function showItemParametersPage(id) {
+        function showItemParametersPage(id, disableHistory) {
             return loadItemParameters()
                 .then(function (result) {
                     if (!result || !id) return result;
@@ -1569,6 +1568,13 @@
                 })
                 .then(function (result) {
                     if (!result) return result;
+                    if (!disableHistory) history.pushState({
+                        type: 'plugin',
+                        author: 'PonomareVlad',
+                        plugin: 'catalog',
+                        action: 'item_catalog_plugin',
+                        parameter: id
+                    }, id ? pms.selectedHost.catalog.item[id].title : 'Добавление товара');
                     return prepareTemplate('item');
                 })
                 .then(function (result) {
@@ -1662,7 +1668,6 @@
                     return true;
                 });
         }
-
 
 
         function showAddCatalogItem() {
@@ -1828,14 +1833,14 @@
         }
 
         function saveCategoryParameters() {
-           /* return pluginIo('console/saveCategory', false, {parameters: pms.selectedHost.catalog.selectedCategory}).then(function (response) {
-                if (!response || !response.status || !response.categoryId) return false;//createNotification('Каталог', 'Произошла ошибка при сохранении', pms.config.icon);
-                pms.selectedHost.catalog.selectedCategory.id = response.categoryId;
-                return true;
-            }).then(function (result) {
-                if (!result) return result;
-                return showCategoryParametersPage(pms.selectedHost.catalog.selectedCategory.id)
-            });*/
+            /* return pluginIo('console/saveCategory', false, {parameters: pms.selectedHost.catalog.selectedCategory}).then(function (response) {
+                 if (!response || !response.status || !response.categoryId) return false;//createNotification('Каталог', 'Произошла ошибка при сохранении', pms.config.icon);
+                 pms.selectedHost.catalog.selectedCategory.id = response.categoryId;
+                 return true;
+             }).then(function (result) {
+                 if (!result) return result;
+                 return showCategoryParametersPage(pms.selectedHost.catalog.selectedCategory.id)
+             });*/
         }
 
         function deleteItem(id) {
@@ -1850,7 +1855,6 @@
                 return showItemsListPage();
             });
         }
-
 
 
         function searchItemsListPage(parameters, search) {
@@ -1915,6 +1919,21 @@
                 query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
             }
             return query;
+        }
+
+        function initHistoryHandler() {
+            window.addEventListener('popstate', function (event) {
+                console.debug('catalog handler', event.state);
+                if (event.state && event.state.type === 'plugin' && event.state.author === 'PonomareVlad' && event.state.plugin === 'catalog' && event.state.action) {
+                    let parameters = {
+                        disableHistory: true,
+                        "plugin": "2",
+                        "id": event.state.action
+                    };
+                    if (event.state.parameter) parameters.item = event.state.parameter;
+                    return menuItemClick("installedPlugins", "items_catalog_plugin", parameters, "item");
+                }
+            }.bind(this))
         }
 
     }

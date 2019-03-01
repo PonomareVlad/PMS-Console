@@ -61,6 +61,7 @@ export function require(script) {
 
 export function prepare() {
     init();
+    initHistoryHandler.bind(this)();
     showLoadingIndicator();
     if (!template.wrapper) return loadTemplate('wrapper')
         .then(function (response) {
@@ -84,6 +85,21 @@ export function prepare() {
             .then(loadHost)
             .then(renderHostsSelectMenu).then(loadNotifications)
             .then(hideLoadingIndicator);
+}
+
+function initHistoryHandler() {
+    window.addEventListener('popstate', function (event) {
+        if (event.state && event.state.type && event.state.type === 'workspace') {
+            leavePage();
+            document.querySelector('#workspace-wrapper').innerHTML = `<div class="flex-center center-text">
+            <div><h3 class="slim-title">Добро пожаловать!</h3><br>
+                <h3 class="slim-subtitle">Для начала, выберите необходимый раздел в <span
+                        class="hide-on-mobile">боковом</span><span class="hide-on-desktop">верхнем</span> Меню</h3>
+            </div>
+        </div>`;
+        }
+    }.bind(this));
+    history.pushState({type: 'workspace'}, "Панель управления Cotton Baby");
 }
 
 function prepareWrapper() {
