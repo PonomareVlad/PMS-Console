@@ -136,7 +136,7 @@ function io(method, getData, postData, url, plainData) {
         if (method) debugData.push(method);
         if (getData !== '') debugData.push(method ? decodeURIComponent(getData) : decodeURIComponent(url));
         if (postData && method) debugData.push(decodeURIComponent(postData));
-        console.debug.apply(this, debugData);
+        // console.debug.apply(this, debugData);
         return {'status': false, 'error': 'Response parse error'};
     }).then(function (response) {
         if (!response || response.error) return response;
@@ -145,11 +145,11 @@ function io(method, getData, postData, url, plainData) {
         if (getData !== '') debugData.push(method ? decodeURIComponent(getData) : decodeURIComponent(url));
         if (postData && method) debugData.push(decodeURIComponent(postData));
         debugData.push(response);
-        console.debug.apply(this, debugData);
+        // console.debug.apply(this, debugData);
         if (response.offline) initOfflineMode(); else pms.offline = false;
         return response;
     }).catch(function (error) {
-        console.error(error);
+        // console.error(error);
         return {'status': false};
     });
 }

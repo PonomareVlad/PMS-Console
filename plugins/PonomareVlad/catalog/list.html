@@ -25,7 +25,8 @@
             <div class="flex-right" style="padding: 0;padding-left:1rem;height: 2rem;align-items: center;">
                 <span style="margin-right: .5rem;height: 100%; line-height: 2rem;display: block;position:relative;"
                       data-template-element="search">🔍</span>
-                <input type="search" placeholder=" Поиск" width="100%" onkeyup="searchItemsListPage(false,this.value);"
+                <input id="list-search-input" onkeyup="searchItemsListPage(false,this.value);" placeholder=" Поиск"
+                       type="search" width="100%"
                        onchange="searchItemsListPage(false,this.value);"
                        onblur="searchItemsListPage(false,this.value);" onclick="searchItemsListPage(false,this.value);"
                        onreset="searchItemsListPage(false,this.value);"

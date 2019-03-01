@@ -61,7 +61,7 @@
             return new Promise(function (resolve, reject) {
                 switch (parameters.id) {
                     case 'items_catalog_plugin':
-                        resolve(showItemsListPage(null, parameters.disableHistory ? parameters.disableHistory : null));
+                        resolve(parameters.item ? searchItemsListPage(null, parameters.item) : showItemsListPage(null, parameters.disableHistory ? parameters.disableHistory : null));
                         break;
                     case 'categories_catalog_plugin':
                         resolve(showCategoriesListPage());
@@ -1580,7 +1580,7 @@
                 .then(function (result) {
                     if (!result) return result;
                     let controlsMenuSource = '<div class="flex-left">';
-                    controlsMenuSource += '<div class="menu-button-section"><button data-menu-button="backButton" onclick="menuButtonClick(\'backButton\',\'showItemsListPage\');">Назад</button></div>';
+                    controlsMenuSource += '<div class="menu-button-section"><button data-menu-button="backButton" onclick="history.back();">Назад</button></div>';
                     controlsMenuSource += '</div><div class="flex-right">';
                     controlsMenuSource += '<div class="menu-button-section"><button data-menu-button="saveButton" onclick="menuButtonClick(\'saveButton\',\'saveItemParameters\');">Сохранить</button></div>';
                     controlsMenuSource += '<div class="menu-button-section"><button data-menu-button="viewButton" onclick="viewItemPage();">Посмотреть</button></div>';
@@ -1887,7 +1887,23 @@
                             document.getElementById('itemsList').innerHTML = 'Ничего не найдено';
                             return 0;
                         }
-                        return showItemsList(listSectionId, false, false, result);
+                        history.replaceState({
+                            type: 'plugin',
+                            author: 'PonomareVlad',
+                            plugin: 'catalog',
+                            action: 'items_catalog_plugin',
+                            parameter: search
+                        }, search + ' - Поиск по товарам');
+                        console.error('Search state', history.state);
+                        pms.onLeavePage.push(function () {
+                            pms.selectedHost.catalog.currentSearch = false;
+                            delete pms.selectedHost.catalog.currentSearch;
+                            return true;
+                        });
+                        return Promise.resolve(true).then(() => {
+                            if (!document.querySelector('#itemsList')) return prepareTemplate('list').then(() => document.querySelector('#list-search-input').value = search);
+                            return true;
+                        }).then(() => showItemsList(listSectionId, false, false, result));
                     })
                     /*.then(function (result) {
                         if (!result) return result;
@@ -1931,6 +1947,7 @@
                         "id": event.state.action
                     };
                     if (event.state.parameter) parameters.item = event.state.parameter;
+                    leavePage();
                     return menuItemClick("installedPlugins", "items_catalog_plugin", parameters, "item");
                 }
             }.bind(this))
