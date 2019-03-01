@@ -12,7 +12,7 @@ module.exports = {
     output: {
         filename: '[name].js',
         publicPath: '/pms-console/',
-        path: path.resolve(__dirname, './docs')
+        path: path.resolve(__dirname, './')
     },
     module: {
         rules: [
