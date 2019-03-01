@@ -1,0 +1,211 @@
+<div class="workspace-wrapper">
+    <div class="workspace-section" id="itemShow">
+        <div id="controls-menu-itemShow" class="horizontal-flex-menu">
+            <div class="flex-left">
+                <div class="menu-button-section">
+                    <button onclick="testWorkspace();">Назад</button>
+                </div>
+            </div>
+            <div class="flex-right">
+                <div class="menu-button-section">
+                    <button>Сохранить</button>
+                </div>
+                <div class="menu-button-section">
+                    <button>Посмотреть</button>
+                </div>
+                <div class="menu-button-section">
+                    <button>Удалить</button>
+                </div>
+            </div>
+        </div>
+        <div class="masonry" >
+            <div class="material-box item">
+                <h1>Название</h1>
+                <div class="input-section">
+                    <input type="text" placeholder="Название">
+                </div>
+            </div>
+            <div class="material-box item">
+                <h1>Описание</h1>
+                <div class="input-section">
+                    <textarea placeholder="Описание"></textarea>
+                </div>
+            </div>
+            <div class="material-box item">
+                <h1>Категория</h1>
+                <div class="input-section">
+                    <select>
+                        <option selected disabled>Шапочка швы на ружу</option>
+                        <option>Новая категория...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="workspace-section" id="workspaceSection">
+        <div id="controls-menu" class="horizontal-flex-menu">
+            <!--<div class="flex-left">
+                <div class="menu-button-section">
+                    <button onclick="testWorkspace();">Назад</button>
+                </div>
+                <div style="margin-left: .5rem"><span> / </span><span><a href="javascript:void(0);"
+                                                                         onclick="testWorkspace()">Категория</a> </span>
+                </div>
+            </div>-->
+            <div class="flex-right hide-on-mobile">
+                <div class="menu-button-section">
+                    <button onclick="newCategory();">Добавить категорию</button>
+                </div>
+            </div>
+        </div>
+        <ul class="flex-table hide-on-mobile" style="padding: 0 1rem;width: calc(100% - 2rem)">
+            <li>
+                <div>ID</div>
+                <div>Название</div>
+                <div class="flex-right" style="padding: 0;padding-left:1rem;height: 2rem;align-items: center;">
+                    <!--<span style="margin-right: .5rem;height: 100%; line-height: 2rem;display: block;position:relative;"-->
+                    <!--data-template-element="search">🔍</span>-->
+                    <!--<input type="search" placeholder=" Поиск" width="100%" onkeyup="searchItemsListPage(false,this.value);"-->
+                    <!--onchange="searchItemsListPage(false,this.value);"-->
+                    <!--onblur="searchItemsListPage(false,this.value);" onclick="searchItemsListPage(false,this.value);"-->
+                    <!--onreset="searchItemsListPage(false,this.value);"-->
+                    <!--onautocomplete="searchItemsListPage(false,this.value);">-->
+                </div>
+            </li>
+        </ul>
+        <ul class="flex-table" id="itemsList">
+            Получение данных...
+        </ul>
+    </div>
+</div>
+
+<style>
+    .workspace-section {
+        margin-top: 10px !important;
+        padding-top: 0 !important;
+        /*overflow: scroll;*/
+    }
+
+    .flex-table {
+        padding-top: .5rem;
+    }
+
+    .flex-table * {
+        transition: none;
+    }
+
+    .workspace-section > .flex-table > li {
+        cursor: pointer;
+        margin-top: .6rem;
+    }
+
+    .workspace-section > .flex-table > li > .loader-spinner-wrapper {
+        height: calc(100% - 1rem) !important;
+    }
+
+    .flex-table > li * {
+        line-height: 1rem;
+        height: 1rem;
+        font-size: 1rem;
+
+    }
+
+    .flex-table > li > *:nth-child(1) {
+        width: 10%;
+    }
+
+    .flex-table > li > *:nth-child(2), .flex-table > li > *:nth-child(3) {
+        width: 40%;
+        word-wrap: normal;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+    /*.flex-table > li > *:nth-child(3) {
+        width: 40%;
+        word-wrap: normal;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }*/
+
+    .flex-table > li > *:nth-child(4) {
+        width: 10%;
+    }
+
+    .flex-table > li button {
+        opacity: 0;
+        pointer-events: none;
+        border: none;
+        background: none;
+        margin: 0 .5rem;
+        height: 1rem;
+        font-size: .8rem;
+    }
+
+    .workspace-section > .flex-table > li:hover {
+        -webkit-box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.2);
+        -moz-box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.2);
+        box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.2);
+    }
+
+    .workspace-section > .flex-table > li:active {
+        background: #eee;
+        color: #000;
+    }
+
+    .flex-table > li:hover button {
+        cursor: pointer;
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .workspace-wrapper input {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        height: 2rem;
+        line-height: 2rem;
+        border: 1px dashed #ddd;
+        border-radius: 5px;
+        padding: 0 .5rem;
+        font-size: 1rem;
+        font-weight: 100;
+        /*cursor: pointer;*/
+        background: #FFFFFF;
+        white-space: nowrap;
+    }
+
+
+
+    .masonry {
+        position: relative;
+        height: auto;
+        width: calc(100% - 50px);
+    }
+
+    .masonry > * {
+        margin: .5rem;
+        position: relative;
+        padding: 20px;
+        height: auto;
+    }
+
+
+    .list-section button {
+        border: none;
+        background: none;
+        cursor: pointer;
+    }
+
+    .list-section li{
+        list-style: none;
+    }
+
+    #parametersList {
+        margin: .5rem 0;
+    }
+
+</style>

@@ -131,13 +131,13 @@
         return targetPluginMethod(parameters);
     }
 
-    function pluginIo(method = false, getData = false, postData = false, plainData = false) {
+    function pluginIo(method = false, getData = false, postData = false, plainData = false, requestPath = false) {
         if (!method || !pms.selectedPlugin) return new Promise(function (resolve, reject) {
             resolve(true)
         });
         let data = {
             hostId: pms.selectedHost.id,
-            requestPath: pms.selectedPlugin.installPath + method,
+            requestPath: requestPath ? requestPath : (pms.selectedPlugin.installPath + method),
         };
         if (getData) data.getData = getData;
         if (postData) data.mode = 'POST';

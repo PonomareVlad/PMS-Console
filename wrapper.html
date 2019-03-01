@@ -1,0 +1,62 @@
+<header class="horizontal-flex-menu background-blur">
+    <div class="flex-left">
+        <a href="/pms-console/" id="home-page" target="_top">
+            <figure class="mini-logo hide-on-mobile"><img id="host-logo" src="assets/images/logo.small.png"></figure>
+            <span class="slim-title" id="host-name">PRakula CMS</span>
+        </a>
+        <div class="menu-button-section hide-on-mobile">
+            <select id="select-hosts-menu">
+                <option selected disabled>🌐 Выберите Сайт</option>
+            </select>
+        </div>
+    </div>
+    <div class="flex-right">
+        <div class="hide-on-mobile">
+            <span id="user-avamoji" style="margin-right: .3rem;">🤔</span><span id="user-name">Пользователь</span>
+        </div>
+        <div class="menu-button-section hide-on-mobile" style="margin-right: unset">
+            <button onclick="auth.logout();">Выход</button>
+        </div>
+        <div class="hide-on-desktop" style="margin-left: 1rem;" id="header-menu-button">
+            <figure class="menu-button-icon"></figure>
+        </div>
+    </div>
+</header>
+<main class="workspace-container">
+    <aside id="workspace-menu" class="scrollbox">
+        <h2>Меню:</h2>
+        <ul>
+            <div style="display: flex;margin-top: 1rem;">
+                <div class="ispinner ispinner--gray ispinner--animating">
+                    <div class="ispinner__blade"></div>
+                    <div class="ispinner__blade"></div>
+                    <div class="ispinner__blade"></div>
+                    <div class="ispinner__blade"></div>
+                    <div class="ispinner__blade"></div>
+                    <div class="ispinner__blade"></div>
+                    <div class="ispinner__blade"></div>
+                    <div class="ispinner__blade"></div>
+                    <div class="ispinner__blade"></div>
+                    <div class="ispinner__blade"></div>
+                    <div class="ispinner__blade"></div>
+                    <div class="ispinner__blade"></div>
+                </div>
+                <div style="margin-left: 0.5rem;margin-right: 1rem;">Загрзука элементов...</div>
+            </div>
+        </ul>
+    </aside>
+    <section id="workspace-wrapper" class="flex-left">
+        <div class="flex-center center-text">
+            <div><h3 class="slim-title">Добро пожаловать!</h3><br>
+                <h3 class="slim-subtitle">Для начала, выберите необходимый раздел в <span class="hide-on-mobile">боковом</span><span class="hide-on-desktop">верхнем</span> Меню</h3></div>
+        </div>
+    </section>
+</main>
+<footer class="horizontal-flex-menu background-blur">
+    <span>
+        © PMS 2018 <span class="hide-on-mobile">(provided by ©
+        <a href="http://prakula.ru" target="_blank" rel="noopener">PRakula</a> 2014 - 2018 and
+        <a href="https://akulaweb.ru" target="_blank" rel="noopener">AkulaWeb.ru</a>)</span>
+    </span>
+</footer>
+<div class="notifications-wrapper" id="notificationsWrapper"></div>
